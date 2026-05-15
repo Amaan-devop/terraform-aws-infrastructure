@@ -27,9 +27,8 @@ resource "aws_internet_gateway" "IGW-app" {
 }
 
 resource "aws_eip" "Nat-Gateway-EIP" {
-  depends_on = [
-    aws_route_table_association.subnet-association-pub
-  ]
+  domain     = "vpc"
+  depends_on = [aws_route_table_association.subnet-association-pub]
   tags = {
     Name = "EIP-app"
   }
@@ -41,7 +40,7 @@ resource "aws_nat_gateway" "NAT-GATEWAY-app" {
   # ]
   allocation_id = aws_eip.Nat-Gateway-EIP.id
 
-  subnet_id = aws_subnet.subnets[0].id
+  subnet_id = aws_subnet.subnets-app[0].id
   tags = {
     Name = "Nat-Gateway-app"
   }
@@ -59,7 +58,7 @@ resource "aws_route_table" "RT-pub" {
 }
 
 resource "aws_route_table_association" "subnet-association-pub" {
-  subnet_id      = aws_subnet.subnets[count.index].id
+  subnet_id      = aws_subnet.subnets-app[count.index].id
   route_table_id = aws_route_table.RT-pub.id
   count          = 2
 
@@ -80,7 +79,7 @@ resource "aws_route_table_association" "subnet-association-private1-nat" {
   depends_on = [
     aws_route_table.RT-private1
   ]
-  subnet_id      = aws_subnet.subnets[2].id
+  subnet_id      = aws_subnet.subnets-app[2].id
   route_table_id = aws_route_table.RT-private1.id
 }
 
@@ -92,6 +91,6 @@ resource "aws_route_table" "RT-private2" {
 }
 
 resource "aws_route_table_association" "subnet-association-private2" {
-  subnet_id      = aws_subnet.subnets[3].id
+  subnet_id      = aws_subnet.subnets-app[3].id
   route_table_id = aws_route_table.RT-private2.id
 }

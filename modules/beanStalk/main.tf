@@ -32,6 +32,11 @@ resource "aws_elastic_beanstalk_environment" "beanstalkappenv" {
     value     = join(",", var.public_subnets)
   }
   setting {
+    namespace = "aws:ec2:vpc"
+    name      = "ELBSubnets"
+    value     = join(",", var.elb_public_subnets)
+  }
+  setting {
     namespace = "aws:elasticbeanstalk:environment:process:default"
     name      = "MatcherHTTPCode"
     value     = "200"

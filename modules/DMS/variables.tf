@@ -1,4 +1,4 @@
-variable "instacne_type" {
+variable "instance_type" {
   default = "dms.t3.micro"
   type    = string
 }

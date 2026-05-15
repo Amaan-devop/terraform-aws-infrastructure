@@ -5,8 +5,8 @@
 
 resource "aws_launch_template" "smart_launch_template" {
   name_prefix   = join("-", [var.app_name, "template"])
-  image_id      = "ami-0e17b4db59f6aafcc"
-  instance_type = "t3.micro"
+  image_id      = var.ami_id
+  instance_type = var.instance_type
 }
 
 resource "aws_autoscaling_group" "bar" {
@@ -40,7 +40,7 @@ resource "aws_autoscaling_group" "bar" {
   }
 
   tag {
-    key                 = "createby-asg"
+    key                 = "createdby-asg"
     value               = var.app_name
     propagate_at_launch = true
   }

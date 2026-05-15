@@ -44,7 +44,7 @@ module "dms_repl_instance" {
   source             = "./modules/DMS"
   subnet_id          = "sb-abc"
   security_group_ids = ["sg-123", "sg-abc"]
-  instacne_type      = "dms.t3.micro"
+  instance_type      = "dms.t3.micro"
   instance_id        = "test_instance"
 
   depends_on = [

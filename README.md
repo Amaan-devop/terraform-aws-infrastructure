@@ -6,12 +6,11 @@ A collection of reusable Terraform modules for provisioning core AWS infrastruct
 
 | Module | AWS Service | Description |
 |---|---|---|
-| `vpc` | Amazon VPC | Custom VPC with subnets, route tables, and internet gateway |
-| `instance` | Amazon EC2 | EC2 instance with configurable AMI, type, and key pair |
-| `autoscalinggroup` | Auto Scaling Group | ASG with launch template and scaling policies |
-| `ECS` | Amazon ECS | ECS cluster and service setup |
-| `lambda` | AWS Lambda | Lambda function with Python runtime and IAM role |
-| `beanStalk` | Elastic Beanstalk | Web server environment with VPC and ELB support |
+| `vpc` | Amazon VPC | Custom VPC with subnets, route tables, NAT gateway, and internet gateway |
+| `instance` | Amazon EC2 | EC2 instance with configurable AMI, type, key pair, and SSH CIDR |
+| `autoscalinggroup` | Auto Scaling Group | ASG with configurable launch template (AMI and instance type as variables) |
+| `lambda` | AWS Lambda | Lambda function with Python 3.12 runtime and IAM role |
+| `beanStalk` | Elastic Beanstalk | Web server environment with VPC, instance subnets, and ELB subnet support |
 | `S3` | Amazon S3 | S3 bucket with configurable access and versioning |
 | `distribution` | Amazon CloudFront | CloudFront distribution backed by an S3 origin |
 | `DMS` | AWS DMS | Database Migration Service replication instance and tasks |
@@ -22,7 +21,6 @@ A collection of reusable Terraform modules for provisioning core AWS infrastruct
 .
 ├── main.tf                     # Provider and backend (S3) configuration
 ├── variables.tf                # Root-level variables
-├── ECS.tf                      # ECS module call
 ├── asg.tf                      # Auto Scaling Group module call
 ├── beanstalk.tf                # Elastic Beanstalk module call
 ├── cloudfront-s3.tf            # S3 + CloudFront module calls
@@ -46,8 +44,10 @@ A collection of reusable Terraform modules for provisioning core AWS infrastruct
 ## Prerequisites
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- AWS provider `~> 5.0` (pinned in `main.tf` — run `terraform init -upgrade` if upgrading from an older provider)
 - AWS CLI configured with appropriate credentials (`aws configure`)
 - An S3 bucket for Terraform remote state (see [Backend Configuration](#backend-configuration))
+- An SSH public key on disk to supply as `ssh_public_key_path` when using the `instance` module
 
 ## Backend Configuration
 
@@ -88,13 +88,40 @@ Each module can be used independently. Example — spinning up an EC2 instance:
 module "my_instance" {
   source = "./modules/instance"
 
-  ami           = "ami-0abcdef1234567890"
-  instance_type = "t3.micro"
-  key_name      = "my-key-pair"
+  instance_ami        = "ami-0abcdef1234567890"
+  instance_type       = "t3.micro"
+  instance_name       = "my-app"
+  ssh_public_key_path = "~/.ssh/my-key.pub"
+  ssh_allowed_cidr    = "203.0.113.10/32"  # replace with your IP
 }
 ```
 
-Refer to the `README.md` inside each module directory for its full list of input variables and outputs.
+Example — deploying an Auto Scaling Group:
+
+```hcl
+module "my_asg" {
+  source = "./modules/autoscalinggroup"
+
+  app_name      = "my-app"
+  ami_id        = "ami-0abcdef1234567890"
+  instance_type = "t3.micro"
+  subnets       = ["subnet-abc123", "subnet-def456"]
+}
+```
+
+Example — deploying a Lambda function:
+
+```hcl
+module "my_lambda" {
+  source = "./modules/lambda"
+
+  function_name = "my-app-processor"
+}
+```
+
+> **DMS note:** `dms.tf` contains placeholder values (`subnet_id = "sb-abc"`, `security_group_ids = ["sg-123", "sg-abc"]`). Replace these with real subnet and security group IDs from your AWS account before running `terraform apply`.
+
+Refer to each module's `variables.tf` for the full list of inputs and defaults.
 
 ## Module Inputs & Outputs
 
@@ -108,5 +135,5 @@ Each module under `modules/` contains:
 - **IaC:** Terraform (HashiCorp Configuration Language)
 - **Cloud:** Amazon Web Services (AWS)
 - **State Backend:** Amazon S3
-- **Runtime (Lambda):** Python 3.x
+- **Runtime (Lambda):** Python 3.12
 

@@ -1,7 +1,6 @@
 
 variable "vpc_cidr" {
-  # default   = "192.168.29.0/24"
-  sensitive = true
+  # default = "192.168.29.0/24"
 }
 
 variable "subnets" {

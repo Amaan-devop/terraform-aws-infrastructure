@@ -4,7 +4,7 @@
 # }
 # module "s3_bucket" {
 #   source = "./modules/S3"
-#   bucket_name = "sampleapp-test-ui-"+var.bucket_region
+#   bucket_name = "sampleapp-test-ui-${var.bucket_region}"
 #   providers = {
 #     aws = aws.s3_region
 #   }
