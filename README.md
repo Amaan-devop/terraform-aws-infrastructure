@@ -14,6 +14,7 @@ A collection of reusable Terraform modules for provisioning core AWS infrastruct
 | `S3` | Amazon S3 | S3 bucket with configurable access and versioning |
 | `distribution` | Amazon CloudFront | CloudFront distribution backed by an S3 origin |
 | `DMS` | AWS DMS | Database Migration Service replication instance and tasks |
+| `ECS` | Amazon ECS | ECS cluster, Fargate/EC2 task definition, service, and execution IAM role |
 
 ## Project Structure
 
@@ -26,13 +27,14 @@ A collection of reusable Terraform modules for provisioning core AWS infrastruct
 ├── cloudfront-s3.tf            # S3 + CloudFront module calls
 ├── dms.tf                      # DMS module call
 ├── instance.tf                 # EC2 instance module call
+├── ecs.tf                      # ECS cluster + service module call
 ├── lambda.tf                   # Lambda module call
 ├── s3.tf                       # S3 module call
 └── modules/
     ├── vpc/                    # VPC, subnets, routing
     ├── instance/               # EC2 instance
     ├── autoscalinggroup/       # Launch template + ASG
-    ├── ECS/                    # ECS cluster and service
+    ├── ECS/                    # ECS cluster, task definition, service, IAM
     ├── lambda/                 # Lambda + Python source
     │   └── python/             # Lambda handler code
     ├── beanStalk/              # Elastic Beanstalk environment
@@ -118,6 +120,30 @@ module "my_lambda" {
   function_name = "my-app-processor"
 }
 ```
+
+Example — deploying an ECS Fargate cluster and service:
+
+```hcl
+module "my_ecs" {
+  source = "./modules/ECS"
+
+  app_name        = "my-app"
+  region          = "ap-south-2"
+  launch_type     = "FARGATE"
+  container_name  = "my-app-container"
+  container_image = "nginx:latest"
+  container_port  = 80
+  task_cpu        = 256
+  task_memory     = 512
+  desired_count   = 1
+
+  subnet_ids         = ["subnet-abc123", "subnet-def456"]
+  security_group_ids = ["sg-abc123"]
+  assign_public_ip   = false
+}
+```
+
+> **ECS note:** `ecs.tf` is commented out by default. Populate `subnet_ids` and `security_group_ids` with values from your VPC before enabling it.
 
 > **DMS note:** `dms.tf` contains placeholder values (`subnet_id = "sb-abc"`, `security_group_ids = ["sg-123", "sg-abc"]`). Replace these with real subnet and security group IDs from your AWS account before running `terraform apply`.
 
